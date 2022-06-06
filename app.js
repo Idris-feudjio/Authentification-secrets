@@ -1,8 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const ejs = require("ejs");
-const bodyParser = require("body-parser");
-const { get } = require("http");
+const bodyParser = require("body-parser"); 
 const app = express();
 
 app.use(express.static('public'));
@@ -18,7 +17,19 @@ const userSchema = mongoose.Schema({
 const User = mongoose.model('User',userSchema);
 
 app.get('/', (req, res) => {
-    res.send('Hello world !');
+    res.render('home');
+})
+
+app.get('/login', (req, res) => {
+    res.render('login');
+})
+
+app.get('/register', (req, res) => {
+    res.render('register');
+})
+
+app.get('/secrets', (req, res) => {
+    res.render('secrets');
 })
 
 app.listen(3000, () => {
