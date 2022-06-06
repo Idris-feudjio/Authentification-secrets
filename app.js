@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const encrypt = require('mongoose-encryption');
 const ejs = require("ejs");
 const bodyParser = require("body-parser");
 const res = require("express/lib/response");
@@ -9,15 +10,19 @@ app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
+
 mongoose.connect('mongodb://localhost:27017/authentificationDB');
 
-const userSchema = mongoose.Schema({
+const userSchema = new mongoose.Schema({
     userName: {
         type: String,
         required: [true, 'username is required']
     },
     password: String
 });
+
+const secret = 'thisisalittlesecretscode.';
+userSchema.plugin(encrypt, { secret: secret, encryptedFields: ['password'] })
 const User = mongoose.model('User', userSchema);
 
 app.get('/', (req, res) => {
@@ -30,18 +35,18 @@ app.route('/login')
     .get((req, res) => {
         res.render('login', { noteMatch: '' });
     })
-    .post((req, res) => { 
+    .post((req, res) => {
         const username = req.body.username;
         const password = req.body.password;
         User.findOne({ username: username }, (err, user) => {
             if (err) {
                 console.log('USER NOT FOUND');
             } else {
-                if (user.userName === username && user.password === password) {
+                if (user.password === password) {
                     res.render('secrets');
-                } else { 
-                    console.log('USERNAME OR PASSWORD INCORRECT'); 
-                    res.render('login', { noteMatch: 'username or password incorrect' }); 
+                } else {
+                    console.log('USERNAME OR PASSWORD INCORRECT');
+                    res.render('login', { noteMatch: 'username or password incorrect' });
                 }
             }
         })
