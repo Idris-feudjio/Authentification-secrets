@@ -1,9 +1,9 @@
+require('dotenv').config() //We use dotenv pour eviter les arckeurs de telecherger l'app sur Github et aveoir acces au secret code 
 const express = require("express");
 const mongoose = require("mongoose");
 const encrypt = require('mongoose-encryption');
 const ejs = require("ejs");
-const bodyParser = require("body-parser");
-const res = require("express/lib/response");
+const bodyParser = require("body-parser"); 
 const app = express();
 
 app.use(express.static('public'));
@@ -21,8 +21,8 @@ const userSchema = new mongoose.Schema({
     password: String
 });
 
-const secret = 'thisisalittlesecretscode.';
-userSchema.plugin(encrypt, { secret: secret, encryptedFields: ['password'] })
+//////////////////////////////// ENCRYPT /////////////////////////// 
+userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ['password'] })
 const User = mongoose.model('User', userSchema);
 
 app.get('/', (req, res) => {
