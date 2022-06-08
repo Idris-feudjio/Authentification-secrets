@@ -2,12 +2,14 @@ const express = require("express");
 const mongoose = require("mongoose");
 const ejs = require("ejs");
 const bodyParser = require("body-parser");
-const md5 = require('md5');
+const bcrypt = require('bcrypt');
 const app = express();
 
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
+
+const saltRounds = 10;
 
 
 mongoose.connect('mongodb://localhost:27017/authentificationDB');
@@ -34,18 +36,22 @@ app.route('/login')
     })
     .post((req, res) => {
         const username = req.body.username;
-        const password = md5(req.body.password);
+        const password = req.body.password;
+
         User.findOne({ username: username }, (err, user) => {
             if (err) {
                 console.log('USER NOT FOUND');
             } else {
-                console.log(user.userName === username && user.password === password);
-                if (user.userName === username && user.password === password) {
-                    res.render('secrets');
-                } else {
-                    console.log('USERNAME OR PASSWORD INCORRECT');
-                    res.render('login', { noteMatch: 'username or password incorrect' });
-                }
+                if (user) {
+                    bcrypt.compare(password, user.password, (error, result) => {
+                        if (result === true) {
+                            res.render('secrets');
+                        } else {
+                            console.log('USERNAME OR PASSWORD INCORRECT');
+                            res.render('login', { noteMatch: 'username or password incorrect' });
+                        }
+                    });
+                } 
             }
         })
     })
@@ -56,19 +62,22 @@ app.route('/register')
         res.render('register');
     })
     .post((req, res) => {
-        const newUser = new User({
-            userName: req.body.username,
-            password: md5(req.body.password)
+        bcrypt.hash(req.body.password, saltRounds, function (error, hash) {
+            const newUser = new User({
+                userName: req.body.username,
+                password: hash
+            });
+
+            newUser.save((err) => {
+                if (!err) {
+                    console.log('NEW USER SAVE SUCCEFULLY');
+                } else {
+                    console.log(err);
+                }
+            })
+            res.render('secrets');
         });
 
-        newUser.save((err) => {
-            if (!err) {
-                console.log('NEW USER SAVE SUCCEFULLY');
-            } else {
-                console.log(err);
-            }
-        })
-        res.render('secrets');
     })
 
 app.get('/secrets', (req, res) => {
